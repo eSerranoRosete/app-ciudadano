@@ -3,6 +3,9 @@ import {
 	addToast,
 	Button,
 	Input,
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
 	Select,
 	SelectItem,
 } from "@heroui/react";
@@ -146,7 +149,21 @@ function RouteComponent() {
 												longitude={route[5][0]}
 												anchor="bottom"
 											>
-												<img src="/truck-marker.png" className="size-10" />
+												<Popover placement="top">
+													<PopoverTrigger>
+														<img src="/truck-marker.png" className="size-10" />
+													</PopoverTrigger>
+													<PopoverContent>
+														<div className="px-1 py-2">
+															<div className="text-small font-bold">
+																Camión 001
+															</div>
+															<div className="text-sm">
+																Horario: Lun, Vie <br /> Desde 10:00am
+															</div>
+														</div>
+													</PopoverContent>
+												</Popover>
 											</Marker>
 
 											<Source
