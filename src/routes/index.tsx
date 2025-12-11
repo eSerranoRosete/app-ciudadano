@@ -8,7 +8,7 @@ import {
 } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Layer, Map, Marker, Source } from "@vis.gl/react-maplibre";
 import { Fragment } from "react/jsx-runtime";
 import { useGeolocated } from "react-geolocated";
