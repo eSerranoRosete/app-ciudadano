@@ -87,6 +87,7 @@ function RouteComponent() {
 									placeholder="Ej. 54719"
 									description="Introduce tu código postal."
 									isInvalid={!!fieldState.error}
+									type="number"
 									endContent={
 										<Button
 											size="sm"
