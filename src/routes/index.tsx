@@ -1,25 +1,10 @@
-import {
-	Alert,
-	addToast,
-	Button,
-	Input,
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-	Select,
-	SelectItem,
-} from "@heroui/react";
+import { addToast, Button, Input, Select, SelectItem } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Layer, Map, Marker, Source } from "@vis.gl/react-maplibre";
-import { Fragment } from "react/jsx-runtime";
-import { useGeolocated } from "react-geolocated";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { route1, route2 } from "../mockData";
-
-const routes = [route1, route2];
+import { MapComponent } from "../components/MapComponent";
 
 export const Route = createFileRoute("/")({
 	component: RouteComponent,
@@ -30,13 +15,6 @@ const formSchema = z.object({
 });
 
 function RouteComponent() {
-	const { coords } = useGeolocated({
-		positionOptions: {
-			enableHighAccuracy: true,
-		},
-		userDecisionTimeout: 5000,
-	});
-
 	const form = useForm({
 		resolver: zodResolver(formSchema),
 	});
@@ -121,86 +99,7 @@ function RouteComponent() {
 						</Select>
 					)}
 
-					{getRecolectores.data && (
-						<div>
-							<p className="text-sm text-default-500 mb-2 mt-4">
-								Se encontraron 2 recolectores en tu zona
-							</p>
-							<div className="w-full aspect-square rounded-xl overflow-hidden">
-								<Map
-									mapStyle="https://tiles.openfreemap.org/styles/positron"
-									attributionControl={false}
-									initialViewState={{
-										latitude: 19.69453338162022,
-										longitude: -99.22305361931404,
-										zoom: 14,
-									}}
-								>
-									{coords && (
-										<Marker
-											latitude={coords.latitude}
-											longitude={coords.longitude}
-										/>
-									)}
-									{routes.map((route, index) => (
-										<Fragment key={`route-key-${index}`}>
-											<Marker
-												latitude={route[5][1]}
-												longitude={route[5][0]}
-												anchor="bottom"
-											>
-												<Popover placement="top">
-													<PopoverTrigger>
-														<img src="/truck-marker.png" className="size-10" />
-													</PopoverTrigger>
-													<PopoverContent>
-														<div className="px-1 py-2">
-															<div className="text-small font-bold">
-																Camión 001
-															</div>
-															<div className="text-sm">
-																Horario: Lun, Vie <br /> Desde 10:00am
-															</div>
-														</div>
-													</PopoverContent>
-												</Popover>
-											</Marker>
-
-											<Source
-												id={`route-${index}`}
-												type="geojson"
-												data={{
-													type: "Feature",
-													geometry: {
-														type: "LineString",
-														coordinates: route,
-													},
-													properties: {},
-												}}
-											/>
-
-											<Layer
-												id={`route-line=${index}`}
-												type="line"
-												source={`route-${index}`}
-												paint={{
-													"line-color": "#216FEE",
-													"line-width": 6,
-													"line-blur": 1.5,
-												}}
-											/>
-										</Fragment>
-									))}
-								</Map>
-							</div>
-							<Alert
-								title="Instrucciones:"
-								description="Da click en un camión para ver mas detalles"
-								color="warning"
-								className="mt-2"
-							/>
-						</div>
-					)}
+					{getRecolectores.data && <MapComponent />}
 				</div>
 			</div>
 		</>
