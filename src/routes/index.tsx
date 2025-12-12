@@ -2,6 +2,7 @@ import { addToast, Button, Input, Select, SelectItem } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { MapComponent } from "../components/MapComponent";
@@ -15,12 +16,19 @@ const formSchema = z.object({
 });
 
 function RouteComponent() {
+	const [cp, setCp] = useLocalStorage<string>("app-codigo-postal", "");
+
 	const form = useForm({
 		resolver: zodResolver(formSchema),
+		defaultValues: {
+			cp,
+		},
 	});
 
 	const mutation = useMutation({
 		mutationFn: async (data: z.infer<typeof formSchema>) => {
+			setCp(data.cp); //Guardar a local storage
+
 			const res = await fetch(
 				`https://sepomex.icalialabs.com/api/v1/zip_codes?zip_code=${data.cp}`,
 			);
