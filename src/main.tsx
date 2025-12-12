@@ -18,6 +18,12 @@ declare module "@tanstack/react-router" {
 	}
 }
 
+if ("serviceWorker" in navigator) {
+	window.addEventListener("load", () => {
+		navigator.serviceWorker.register("/sw.js", { scope: "/" });
+	});
+}
+
 // Render the app
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {
