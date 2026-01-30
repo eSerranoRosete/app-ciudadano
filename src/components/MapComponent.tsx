@@ -1,99 +1,89 @@
 import { Alert, Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
-import { Layer, Map, Marker, Source } from "@vis.gl/react-maplibre";
-import { useEffect, useState } from "react";
-import { useGeolocated } from "react-geolocated";
-import { route3 } from "../mockData";
+import { Map, Marker } from "@vis.gl/react-maplibre";
+// import { Layer, Source } from "@vis.gl/react-maplibre";
+import { useEffect } from "react";
+// import { useGeolocated } from "react-geolocated";
+// import { route3 } from "../mockData";
 
-interface IFProps {}
+interface Recolector {
+    id: string;
+    coords: {
+        latitude: number;
+        longitude: number;
+    };
+    status: "active" | "inactive";
+}
 
-export const MapComponent = ({}: IFProps) => {
-	const [currIndex, setCurrIndex] = useState<number>(0);
+interface IFProps {
+    recolectores: Recolector[];
+    selectedId?: string;
+	onRefresh: () => void;
+}
 
+export const MapComponent = ({ recolectores, selectedId, onRefresh }: IFProps) => {
 	useEffect(() => {
-		const t = setTimeout(() => {
-			setCurrIndex((prev) => prev + 1);
-		}, 1500);
+        const interval = setInterval(() => {
+            onRefresh();
+        }, 2000);
 
-		return () => clearTimeout(t);
-	}, [currIndex]);
+        return () => clearInterval(interval);
+    }, [onRefresh]);
+    // Buscamos el recolector seleccionado para centrar el mapa en él
+    const activeRecolector = recolectores.find(r => r.id === selectedId) || recolectores[0];
 
-	const { coords } = useGeolocated({
-		positionOptions: {
-			enableHighAccuracy: true,
-		},
-		userDecisionTimeout: 5000,
-	});
-
-	return (
-		<div>
-			<p className="text-sm text-default-500 mb-2 mt-4">
-				Se encontraron 2 recolectores en tu zona
-			</p>
-			<div className="w-full aspect-square rounded-xl overflow-hidden">
-				<Map
-					mapStyle="https://tiles.openfreemap.org/styles/positron"
-					attributionControl={false}
-					initialViewState={{
-						latitude: 19.69453338162022,
-						longitude: -99.22305361931404,
-						zoom: 14,
-					}}
-				>
-					{coords && (
-						<Marker latitude={coords.latitude} longitude={coords.longitude} />
-					)}
-
-					<Marker
-						latitude={route3[currIndex][1]}
-						longitude={route3[currIndex][0]}
-						anchor="bottom"
-					>
-						<Popover placement="top">
-							<PopoverTrigger>
-								<img src="/truck-marker.png" className="size-10" />
-							</PopoverTrigger>
-							<PopoverContent>
-								<div className="px-1 py-2">
-									<div className="text-small font-bold">Camión 001</div>
-									<div className="text-sm">
-										Horario: Lun, Vie <br /> Desde 10:00am
-									</div>
-								</div>
-							</PopoverContent>
-						</Popover>
-					</Marker>
-
-					<Source
-						id={"ruta-test"}
-						type="geojson"
-						data={{
-							type: "Feature",
-							geometry: {
-								type: "LineString",
-								coordinates: route3,
-							},
-							properties: {},
-						}}
-					/>
-
-					<Layer
-						id={"ruta-test-linea"}
-						type="line"
-						source={"ruta-test"}
-						paint={{
-							"line-color": "#216FEE",
-							"line-width": 6,
-							"line-blur": 1.5,
-						}}
-					/>
-				</Map>
-			</div>
-			<Alert
-				title="Instrucciones:"
-				description="Da click en un camión para ver mas detalles"
-				color="warning"
-				className="mt-2"
-			/>
-		</div>
-	);
+    return (
+        <div>
+            <p className="text-sm text-default-500 mb-2 mt-4">
+                Se encontraron {recolectores.length} recolectores en tu zona
+            </p>
+            <div className="w-full aspect-square rounded-xl overflow-hidden">
+                <Map
+                    // Usamos key para forzar el re-renderizado cuando cambie el recolector y se mueva la cámara
+                    // key={activeRecolector?.id} 
+                    mapStyle="https://tiles.openfreemap.org/styles/positron"
+                    attributionControl={false}
+                    initialViewState={{
+                        latitude: activeRecolector?.coords.latitude || 19.6945,
+                        longitude: activeRecolector?.coords.longitude || -99.2230,
+                        zoom: 14,
+                    }}
+                >
+                    {recolectores.map((recolector) => (
+                        <Marker
+                            key={recolector.id}
+                            latitude={recolector.coords.latitude}
+                            longitude={recolector.coords.longitude}
+                            anchor="bottom"
+                        >
+                            <Popover placement="top">
+                                <PopoverTrigger>
+                                    <div className="relative cursor-pointer">
+                                        {/* Círculo de color según status */}
+                                        <div className={`absolute -top-1 -right-1 size-3 rounded-full border-2 border-white ${recolector.status === 'inactive' ? 'bg-danger' : 'bg-success'}`} />
+                                        <img 
+                                            src="/truck-marker.png" 
+                                            className={`size-10 ${recolector.id === selectedId ? 'scale-125 transition-transform' : 'opacity-80'}`} 
+                                        />
+                                    </div>
+                                </PopoverTrigger>
+                                <PopoverContent>
+                                    <div className="px-1 py-2">
+                                        <div className="text-small font-bold">Recolector: {recolector.id}</div>
+                                        <div className="text-xs capitalize">Estado: {recolector.status}</div>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        </Marker>
+                    ))}
+                </Map>
+            </div>
+            <Alert
+                title="Instrucciones:"
+                description="El punto rojo indica inactivo y el verde activo."
+                color="warning"
+                className="mt-2"
+            />
+        </div>
+    );
 };
+	
