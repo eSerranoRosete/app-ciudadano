@@ -1,12 +1,12 @@
 import { addToast, Button, Input, Select, SelectItem } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useLocalStorage } from "@uidotdev/usehooks";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { MapComponent } from "../components/MapComponent";
-import { useState } from "react";
 
 export const Route = createFileRoute("/")({
 	component: RouteComponent,
@@ -18,7 +18,7 @@ const formSchema = z.object({
 
 function RouteComponent() {
 	const [cp, setCp] = useLocalStorage<string>("app-codigo-postal", "");
-	const [selectedRecolectorId, setSelectedRecolectorId] = useState<string>("");
+	const [colonia, setColonia] = useState<string>();
 
 	const form = useForm({
 		resolver: zodResolver(formSchema),
@@ -47,13 +47,14 @@ function RouteComponent() {
 		},
 	});
 
-	const getRecolectores = useMutation({
-		mutationFn: async (coloniaId: string) => {
-			setSelectedRecolectorId(coloniaId);
+	const getRecolectores = useQuery({
+		queryKey: ["recolectores"],
+		queryFn: async () => {
 			const res = await fetch(`https://api.blossomai.workers.dev/data`);
-            if (!res.ok) throw new Error("Error fetching devices");
-            return await res.json();
+			if (!res.ok) throw new Error("Error fetching devices");
+			return await res.json();
 		},
+		refetchInterval: 500,
 	});
 
 	return (
@@ -100,27 +101,19 @@ function RouteComponent() {
 							size="sm"
 							label="Colonia"
 							description="Selecciona tu colonia"
-							onSelectionChange={( keys ) => {
-								const currentKey = Array.from(keys)[0] as string;
-								currentKey && getRecolectores.mutate(currentKey);
+							onSelectionChange={(val) => {
+								setColonia(val.currentKey);
 							}}
-							isLoading={getRecolectores.isPending}
 						>
-							{getRecolectores.data ? 
-                        getRecolectores.data.map((item: any) => (
-                            <SelectItem key={item.id} textValue={item.id}>
-                                {item.id} - Ubicación actual
-                            </SelectItem>
-                        )) : 
-                        // Fallback por si no han cargado los recolectores todavía
-                        mutation.data.zip_codes.map((item: any) => (
-                            <SelectItem key={item.id}>{item.d_asenta}</SelectItem>
-                        ))
-                    }
+							{mutation.data.zip_codes.map((item: any) => (
+								<SelectItem key={item.id}>{item.d_asenta}</SelectItem>
+							))}
 						</Select>
 					)}
 
-					{getRecolectores.data && <MapComponent recolectores={getRecolectores.data} selectedId={selectedRecolectorId} onRefresh={() => getRecolectores.mutate(selectedRecolectorId)} />}
+					{getRecolectores.data && colonia && (
+						<MapComponent recolectores={getRecolectores.data} />
+					)}
 				</div>
 			</div>
 		</>
