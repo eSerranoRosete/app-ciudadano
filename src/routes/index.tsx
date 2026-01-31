@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { MapComponent } from "../components/MapComponent";
@@ -18,7 +17,6 @@ const formSchema = z.object({
 
 function RouteComponent() {
 	const [cp, setCp] = useLocalStorage<string>("app-codigo-postal", "");
-	const [colonia, setColonia] = useState<string>();
 
 	const form = useForm({
 		resolver: zodResolver(formSchema),
@@ -55,6 +53,18 @@ function RouteComponent() {
 			return await res.json();
 		},
 		refetchInterval: 500,
+	});
+
+	const rutas = useMutation({
+		mutationFn: async (coloniaId: string) => {
+			const res = await fetch(
+				`http://localhost:8787/api/public/rutas?coloniaId=${coloniaId}`,
+			);
+
+			if (!res.ok) throw new Error("Error");
+
+			return await res.json();
+		},
 	});
 
 	return (
@@ -102,7 +112,9 @@ function RouteComponent() {
 							label="Colonia"
 							description="Selecciona tu colonia"
 							onSelectionChange={(val) => {
-								setColonia(val.currentKey);
+								if (val.currentKey) {
+									rutas.mutate(val.currentKey);
+								}
 							}}
 						>
 							{mutation.data.zip_codes.map((item: any) => (
@@ -111,8 +123,11 @@ function RouteComponent() {
 						</Select>
 					)}
 
-					{getRecolectores.data && colonia && (
-						<MapComponent recolectores={getRecolectores.data} />
+					{rutas.data && getRecolectores.data && (
+						<MapComponent
+							rutas={rutas.data.items}
+							recolectores={getRecolectores.data}
+						/>
 					)}
 				</div>
 			</div>
